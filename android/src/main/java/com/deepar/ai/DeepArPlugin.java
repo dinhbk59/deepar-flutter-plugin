@@ -123,9 +123,39 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                     deepAR.switchEffect("effect", inputStream);
                     inputStream.close();
                     result.success("switchEffect called successfully");
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     result.error("111", "switchEffect failed", e.getMessage());
+                }
+                break;
+
+            case MethodStrings.backgroundReplacement: // Background Replacement
+                String image = ((String) arguments.get("image"));
+                try {
+                    if (image.isEmpty()) {
+
+                        deepAR.backgroundReplacement(false, null);
+                    } else {
+                        Bitmap backgroundImage = filePathToBitmap(image);
+                        deepAR.backgroundReplacement(true, backgroundImage);
+                        result.success("backgroundReplacement called successfully");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("111", "backgroundReplacement failed", e.getMessage());
+                }
+                break;
+
+            case MethodStrings.backgroundBlur: // background Blur
+                boolean enable = ((boolean) arguments.get("enable"));
+                int strength = ((int) arguments.get("strength"));
+                try {
+                    deepAR.backgroundBlur(enable, strength);
+                    result.success("backgroundBlur called successfully");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.error("111", "backgroundBlur failed", e.getMessage());
                 }
                 break;
 
@@ -481,5 +511,9 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 .getFlutterAssets()
                 .getAssetFilePathBySubpath(path != null ? path : "");
         return flutterPlugin.getApplicationContext().getAssets().open(assetPath);
+    }
+
+    private Bitmap filePathToBitmap(String filePath) {
+        return BitmapFactory.decodeFile(filePath);
     }
 }

@@ -125,14 +125,33 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             let face = args?["face"] as! Int
             let targetGameObject = args?["targetGameObject"] as? String
             let isGameTargetEmpty = String.isNilOrEmpty(string: targetGameObject)
+            let isPathEmpty = String.isNilOrEmpty(string: path)
+            let usePath = isPathEmpty ? nil : path
             
             if !isGameTargetEmpty {
-                deepAR.switchEffect(withSlot: slot, path: path, face: face, targetGameObject: targetGameObject)
+                deepAR.switchEffect(withSlot: slot, path: usePath, face: face, targetGameObject: targetGameObject)
             }else{
-                deepAR.switchEffect(withSlot: slot, path: path, face: face)
+                deepAR.switchEffect(withSlot: slot, path: usePath, face: face)
             }
             result("switchEffectWithSlot called successfully")
-            
+
+        case "background_replacement":
+            let image_path:String = args?["image"] as! String
+            let key = registrar?.lookupKey(forAsset: image_path)
+            let path = Bundle.main.path(forResource: key, ofType: nil)
+            let image = UIImage(contentsOfFile: path ?? "")
+            if (path) {
+                deepAR.backgroundReplacement(true, image: image)
+            } else {
+                deepAR.backgroundReplacement(false, image: image)
+            }
+            result("backgroundReplacement called successfully")
+
+        case "background_blur":
+            let enable:Bool = args?["enable"] as! Bool
+            let strength:Int = args?["strength"] as! Int
+            deepAR.backgroundBlur(enable, strength)
+            result("backgroundBlur called successfully")
             
         case "start_recording_video":
             startRecordingVideo();
