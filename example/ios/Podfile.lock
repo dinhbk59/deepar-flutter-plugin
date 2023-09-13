@@ -1,5 +1,5 @@
 PODS:
-  - deepar_flutter (0.0.5):
+  - deepar_flutter (0.0.6):
     - Flutter
   - Flutter (1.0.0)
   - open_file (0.0.1):
@@ -24,11 +24,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
 
 SPEC CHECKSUMS:
-  deepar_flutter: e89060abce0c460f36a0bf73802f8a5443f1fdb5
+  deepar_flutter: 6414713a806ed7b2e848100936ff109be0d53040
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   open_file: 02eb5cb6b21264bd3a696876f5afbfb7ca4f4b7d
   permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
 
-PODFILE CHECKSUM: 4ac4f8a0213f258358939df5229bdc3e24797d55
+PODFILE CHECKSUM: 6cc61d5d5d502d86fcafd72ee0c0c13158fcad05
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1

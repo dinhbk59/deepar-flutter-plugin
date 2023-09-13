@@ -1,97 +1,156 @@
 /**
  * @file CameraController.h
- * @brief Contains the @link CameraController @endlink helper class that controls the camera device.
+ * Contains the @link CameraController @endlink helper class that controls the camera device.
  * @copyright Copyright (c) 2021 DeepAR.ai
  */
 
-#import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import "DeepAR.h"
 
-@class ARView;
-
 /**
- * @brief Helper class that wraps <a href="https://developer.apple.com/documentation/avfoundation?language=objc">AVFoundation</a> to handle camera-related logic like starting camera preview, choosing resolution, front or back camera, and video orientation.
- * @details @link CameraController @endlink works with both @link DeepAR @endlink and @link ARView @endlink implementations, just make sure to set one or the other as a property on @link CameraController @endlink instance. Check Github <a href="https://github.com/DeepARSDK/quickstart-ios-objc">example</a> for detailed usage example.
+ * Helper class that wraps [AVFoundation](https://developer.apple.com/documentation/avfoundation)
+ * to handle camera-related logic like starting camera preview, choosing resolution, front or back camera, and video orientation for DeepAR.
+ *
+ * Example of usage:
+ *
+ * **ObjC**
+ * ```objc
+ * self.cameraController = [[CameraController alloc]
+ *                          initWithDeepAR:self.deepAR];
+ * [self.cameraController startCamera];
+ * ```
+ *
+ * **Swift**
+ * ```swift
+ * cameraController = CameraController(deepAR:self.deepAR)
+ * cameraController.startCamera()
+ * ```
  */
 @interface CameraController : NSObject
 
 /**
- * @brief The @link DeepAR @endlink instance.
- * @details Must be set manually if using @link DeepAR @endlink. See @link init @endlink for more details.
+ * The ``DeepAR/DeepAR`` instance.
+ *
+ * > Important: This property should be set only once after the `CameraController` instance is created. See ``init``.
  */
 @property (nonatomic, weak) DeepAR* deepAR;
 
 /**
- * @brief The @link ARView @endlink instance.
- * @details Must be set manually if using @link ARView @endlink. See @link init @endlink for more details.
- * @deprecated This API is deprecated. Please assign the @link DeepAR @endlink instance on <i>deepAR</i> property instead.
- */
-@property (nonatomic, weak) ARView* arview;
-
-/**
- * @brief The currently selected camera.
- * @details Options:
- * - <i>AVCaptureDevicePositionBack</i>
- * - <i>AVCaptureDevicePositionFront</i>
- * @details Changing this parameter in real-time causes the preview to switch to the given camera device.
+ * The currently selected camera.
+ *
+ * Options:
+ * - [`AVCaptureDevicePositionBack`](https://developer.apple.com/documentation/avfoundation/avcapturedeviceposition/avcapturedevicepositionback)
+ * - [`AVCaptureDevicePositionFront`](https://developer.apple.com/documentation/avfoundation/avcapturedeviceposition/avcapturedevicepositionfront)
+ *
+ * > Important: Changing this parameter in real-time causes the preview to switch to the given camera device.
  */
 @property (nonatomic, assign) AVCaptureDevicePosition position;
 
 /**
- * @brief Represents camera resolution currently used. Can be changed in real-time.
+ * Represents camera resolution currently used.
+ *
+ * Can be changed in real-time.
  */
 @property (nonatomic, strong) AVCaptureSessionPreset preset;
 
 /**
- * @brief Represents currently used video orientation. Should be called with right orientation when the device rotates.
+ * Represents currently used video orientation.
+ *
+ * Should be called with right orientation when the device rotates.
  */
 @property (nonatomic, assign) AVCaptureVideoOrientation videoOrientation;
 
 /**
- * @brief Initializes a new @link CameraController @endlink instance.
- * @details Initialization example:
- * @code
- * ...
+ * Initializes a new `CameraController` instance.
+ *
+ * > Tip: Better use ``init(deepAR:)`` instead.
+ *
+ * Example of initialization:
+ *
+ * **ObjC**
+ * ```objc
  * self.cameraController = [[CameraController alloc] init];
  * self.cameraController.deepAR = self.deepAR;
- * // or if using ARView
- * // self.cameraController.arview = self.arview;
  * [self.cameraController startCamera]; 
- * ...
- * @endcode
+ * ```
+ *
+ * **Swift**
+ * ```swift
+ * cameraController = CameraController()
+ * cameraController.deepAR = self.deepAR
+ * cameraController.startCamera()
+ * ```
  */
 - (instancetype)init;
 
 /**
- * @brief Checks camera permissions.
+ * Initializes a new `CameraController` instance.
+ *
+ * Example of initialization:
+ *
+ * **ObjC**
+ * ```objc
+ * self.cameraController = [[CameraController alloc]
+ *                          initWithDeepAR:self.deepAR];
+ * [self.cameraController startCamera];
+ * ```
+ *
+ * **Swift**
+ * ```swift
+ * cameraController = CameraController(deepAR:self.deepAR)
+ * cameraController.startCamera()
+ * ```
+ */
+- (instancetype)initWithDeepAR:(DeepAR*)deepAR;
+
+/**
+ * Checks camera permissions.
+ *
+ * This will promt the user to give the camera permission if the app does not have it.
  */
 - (void)checkCameraPermission;
 
 /**
- * @brief Checks microphone permissions.
+ * Checks microphone permissions.
+ *
+ * This will promt the user to give the microphone permission if the app does not have it.
  */
 - (void)checkMicrophonePermission;
 
 /**
- * @brief Starts camera preview using <a href="https://developer.apple.com/documentation/avfoundation?language=objc">AVFoundation</a>.
- * @details Checks camera permissions and asks if none has been given. If DeepAR started in rendering mode will render camera frames to the @link ARView @endlink.
+ * Starts camera preview.
+ *
+ * Checks camera permissions and asks if none has been given.
  */
 - (void)startCamera;
 
 /**
- * @brief Stops camera preview.
+ * Starts camera preview. Allows to start microphone as well.
+ *
+ * Checks camera permissions and asks if none has been given. Additionally, checks for microphone permissions if specified.
+ *
+ * > Important: Must be called if ``DeepAR/DeepAR/startVideoRecordingWithOutputWidth:outputHeight:subframe:videoCompressionProperties:recordAudio:`` has been called with `recordAudio` parameter set to `true`.
+ *
+ * - Parameter audio: If set to true, camera won't need to reinitialize when starting video recording.
+ */
+- (void)startCameraWithAudio:(BOOL)audio;
+
+/**
+ * Stops camera preview.
  */
 - (void)stopCamera;
 
 /**
- * @brief Starts capturing audio samples using <a href="https://developer.apple.com/documentation/avfoundation?language=objc">AVFoundation</a>.
- * @details Checks permissions and asks if none has been given. Must be called if @link DeepAR::startVideoRecordingWithOutputWidth:outputHeight: startVideoRecordingWithOutputWidth @endlink has been called with <i>recordAudio</i> parameter set to true.
+ * Starts capturing audio samples.
+ *
+ * Checks permissions and asks if none has been given.
+ *
+ * > Important: Must be called if ``DeepAR/DeepAR/startVideoRecordingWithOutputWidth:outputHeight:subframe:videoCompressionProperties:recordAudio:`` has been called with `recordAudio` parameter set to `true`.
  */
 - (void)startAudio;
 
 /**
- * @brief Stops capturing audio samples.
+ * Stops capturing audio samples.
  */
 - (void)stopAudio;
 

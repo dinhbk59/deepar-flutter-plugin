@@ -7,6 +7,7 @@
 import DeepAR
 import Foundation
 import AVKit
+import UIKit
 
 extension String {
     static func isNilOrEmpty(string: String?) -> Bool {
@@ -62,7 +63,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     
     private var deepAR: DeepAR!
     private var cameraController: CameraController!
-    private var arView: ARView!
+    private var arView: UIView!
     private var frame:CGRect!
     
     
@@ -140,7 +141,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             let key = registrar?.lookupKey(forAsset: image_path)
             let path = Bundle.main.path(forResource: key, ofType: nil)
             let image = UIImage(contentsOfFile: path ?? "")
-            if (path) {
+            if ((path) != nil) {
                 deepAR.backgroundReplacement(true, image: image)
             } else {
                 deepAR.backgroundReplacement(false, image: image)
@@ -150,7 +151,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "background_blur":
             let enable:Bool = args?["enable"] as! Bool
             let strength:Int = args?["strength"] as! Int
-            deepAR.backgroundBlur(enable, strength)
+            deepAR.backgroundBlur(enable, strength: strength)
             result("backgroundBlur called successfully")
             
         case "start_recording_video":
@@ -253,7 +254,7 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         
         deepAR.changeLiveMode(true);
         
-        self.arView = self.deepAR.createARView(withFrame: self.frame) as? ARView
+        self.arView = self.deepAR.createARView(withFrame: self.frame)
         cameraController.startCamera()
         
         NotificationCenter.default.addObserver(self, selector: #selector(orientationDidChange), name: UIDevice.orientationDidChangeNotification, object: nil)

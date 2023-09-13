@@ -1,5 +1,13 @@
 framework module DeepAR {
-  umbrella header "DeepAR.h"
-  export *
-  module * { export * }
+    module DeepAR {
+        header "DeepAR.h"
+        export *
+    }
+    
+    module CameraController {
+        header "CameraController.h"
+        export *
+    }
+  
+  //module * { export * }
 }

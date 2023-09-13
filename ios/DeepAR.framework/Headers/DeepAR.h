@@ -1,50 +1,63 @@
 /**
  * @file DeepAR.h
- * @brief Conatins the main DeepAR classes, structures and enumerations.
+ * Conatins the main DeepAR classes, structures and enumerations.
  * @copyright Copyright (c) 2021 DeepAR.ai
  */
 
 #import <Foundation/Foundation.h>
-#import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#include <TargetConditionals.h>
+
+#if TARGET_OS_IOS
+#import <UIKit/UIKit.h>
+#elif TARGET_OS_OSX
+#import <Cocoa/Cocoa.h>
+#endif
 
 /**
- * @brief Represents data structure containing all the information available about the detected face.
+ * Represents data structure containing all the information available about the detected face.
+ *
+ * > Important: The face data is available only when some face filter is loaded.
  */
 typedef struct {
     /**
-     * @brief Determines whether the face is detected or not.
+     * Determines whether the face is detected or not.
      */
-    BOOL detected;
+    bool detected;
     /**
-     * @brief The X, Y and Z translation values of the face in the scene.
+     * The X, Y and Z translation values of the face in the scene.
      */
     float translation[3];
     /**
-     * @brief The pitch, yaw and roll rotation values in euler angles (degrees) of the face in the scene.
+     * The pitch, yaw and roll rotation values in euler angles (degrees) of the face in the scene.
      */
     float rotation[3];
     /**
-     * @brief Translation and rotation in matrix form (D3D style, column-major order).
+     * Translation and rotation in matrix form (D3D style, column-major order).
      */
     float poseMatrix[16];
     /**
-     * @brief Detected face feature points in 3D space (X, Y, Z). Read more <a href="https://help.deepar.ai/en/articles/4351347-deepar-reference-tracking-models">here</a>.
+     * Detected 68 face feature points in 3D space (X, Y, Z).
      */
     float landmarks[68 * 3];
     /**
-     * @brief Detected face feature points in 2D screen space coordinates (X, Y).
-     * @details Usually more precise than 3D points but no estimation for Z translation. Read more here about feature points <a href="https://help.deepar.ai/en/articles/4351347-deepar-reference-tracking-models">here</a>.
+     * Detected face feature points in 2D screen space coordinates (X, Y).
+     *
+     * Usually more precise than 3D points but no estimation for Z translation.
      */
     float landmarks2d[68 * 3]; // TODO: *3 is definitely a typo; fix and test
     /**
-     * @brief A rectangle containing the face in screen coordinates (X, Y, Width, Height).
+     * A rectangle containing the face in screen coordinates (X, Y, Width, Height).
      */
     float faceRect[4];
     /**
-     * @brief Estimated emotions for the face.
-     * @details Each emotion has a value in [0.0, 1.0] range. The 1.0 value means 100% detected emotion.
-     * @details We differentiate 5 different emotions:
+     * Estimated emotions for the face.
+     *
+     * > Important: The emotions values are valid only when some emotion detection filter is loaded.
+     *
+     * Each emotion has a value in [0.0, 1.0] range. The 1.0 value means 100% detected emotion.
+     *
+     * We differentiate 5 different emotions:
      * - Index 0 is neutral
      * - Index 1 is happiness
      * - Index 2 is surprise
@@ -53,180 +66,239 @@ typedef struct {
      */
     float emotions[5];
     /**
-     * @brief The array of action units.
+     * The array of action units.
+     *
+     * > Warning: This property currently contains garbage values and it should not be used.
      */
     float actionUnits[63]; // TODO: discover more
     /**
-     * @brief The number of action units.
+     * The number of ``actionUnits``.
      */
     int numberOfActionUnits; // TODO: discover more
 } FaceData;
 
 /**
- * @brief Structure containing face data for up to 4 detected faces.
+ * Structure containing face data for up to 4 detected faces.
  */
 typedef struct {
     /**
-     * @brief Array of face data for up to 4 detected faces.
+     * Array of face data for up to 4 detected faces.
      */
     FaceData faceData[4];
 } MultiFaceData;
 
 /**
- * @brief The video (and audio) recording configuration.
+ * The video (and audio) recording configuration.
  */
 typedef struct {
     /**
-     * @brief The output video width.
+     * The output video width.
      */
     NSInteger outputWidth;
     /**
-     * @brief The output video height.
+     * The output video height.
      */
     NSInteger outputHeight;
     /**
-     * @brief The sub rectangle of the @link ARView @endlink that you want to record in normalized coordinates (0.0 - 1.0).
+     * The sub rectangle of the view  that you want to record in normalized coordinates (0.0 - 1.0).
      */
     CGRect subframe;
     /**
-     * @brief An <a href="https://developer.apple.com/documentation/foundation/nsdictionary?language=objc">NSDictionary</a> used as the value for the key <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">AVVideoCompressionPropertiesKey</a>. Read more about video compression options in the official docs <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">here</a>.
+     *Video compression properties.
+     *
+     * A dictionary used as the value for the key [`AVVideoCompressionPropertiesKey`](https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey).
      */
-    NSDictionary* videoCompressionProperties;
+    CFDictionaryRef videoCompressionProperties;
     /**
-     * @brief Determine whether audio is recorded or not.
+     * Determine whether audio is recorded or not.
      */
     BOOL recordAudio;
 } RecordingConfig;
 
 /**
- * @brief A four-dimensional float vector.
+ * A four-dimensional float vector.
  */
 typedef struct {
     /**
-     * @brief X value.
+     * X value.
      */
     float x;
     /**
-     * @brief Y value.
+     * Y value.
      */
     float y;
     /**
-     * @brief Z value.
+     * Z value.
      */
     float z;
     /**
-     * @brief W value.
+     * W value.
      */
     float w;
 } Vector4;
 
 /**
- * @brief A three-dimensional float vector.
+ * A three-dimensional float vector.
  */
 typedef struct {    
     /**
-     * @brief X value.
+     * X value.
      */
     float x;
     /**
-     * @brief Y value.
+     * Y value.
      */
     float y;
     /**
-     * @brief Z value.
+     * Z value.
      */
     float z;
 } Vector3;
 
 /**
- * @brief Output color format.
+ * Output color format.
  */
-typedef enum
+typedef NS_ENUM(NSInteger, OutputFormat)
 {
     /**
-     * @brief Undefined format.
+     * Undefined format.
      */
     Undefined, // 0
     /**
-     * @brief Red, green, blue and alpha format.
+     * Red, green, blue and alpha format.
      */
     RGBA,      // 1
     /**
-     * @brief Blue, green, red and alpha format.
+     * Blue, green, red and alpha format.
      */
     BGRA,      // 2
     /**
-     * @brief Alpha, red, green and blue format.
+     * Alpha, red, green and blue format.
      */
     ARGB,      // 3
     /**
-     * @brief Alpha, blue, green and red format.
+     * Alpha, blue, green and red format.
      */
     ABGR,      // 4
     /**
-     * @brief Number of formats.
+     * Number of formats.
      */
     COUNT
-} OutputFormat;
+};
 
 /**
- * @brief DeepAR error types.
+ * DeepAR error types.
  */
-typedef enum {
+typedef NS_ENUM(NSInteger, ARErrorType) {
     /**
-     * @brief DeepAR debug type.
+     * DeepAR debug type.
      */
     DEEPAR_ERROR_TYPE_DEBUG,
     /**
-     * @brief DeepAR info type.
+     * DeepAR info type.
      */
     DEEPAR_ERROR_TYPE_INFO,
     /**
-     * @brief DeepAR warning type.
+     * DeepAR warning type.
      */
     DEEPAR_ERROR_TYPE_WARNING,
     /**
-     * @brief DeepAR error type.
+     * DeepAR error type.
      */
     DEEPAR_ERROR_TYPE_ERROR
-} ARErrorType;
+};
 
 /**
- * @brief Possible types of an occurred touch.
+ * Possible types of an occurred touch.
  */
-typedef enum {
+typedef NS_ENUM(NSInteger, TouchType) {
     /**
-     * @brief Touch type that implies that a touch was started.
+     * Touch type that implies that a touch was started.
      */
     START,
     /**
-     * @brief Touch type that implies that a previously started touch changed.
+     * Touch type that implies that a previously started touch changed.
      */
     MOVE,
     /**
-     * @brief Touch type that implies that a previously started touch ended.
+     * Touch type that implies that a previously started touch ended.
      */
     END
-} TouchType;
+};
 
 /**
- * @brief Contains information about the current location and status of the started touch.
+ * Possible variable types.
+ */
+typedef NS_ENUM(NSInteger, VarType) {
+    /**
+     * Bool variable type.
+     */
+    BOOLEAN = 0,
+    /**
+     * Integer variable type.
+     */
+    INT = 1,
+    /**
+     * Double variable type.
+     */
+    DOUBLE = 2,
+    /**
+     * String variable type.
+     */
+    STRING = 3
+};
+
+#if TARGET_OS_OSX
+/**
+ * Possible types of logging.
+ */
+typedef NS_ENUM(NSInteger, LogType) {
+    /**
+     * Info logging type.
+     */
+    INFO = 1,
+    /**
+     * Warning logging type.
+     */
+    WARNING = 2,
+    /**
+     * Error loging type.
+     */
+    ERROR = 3
+};
+
+@interface LogEntry : NSObject
+
+@property NSString* message;
+@property LogType type;
+
+@end
+#endif
+
+
+/**
+ * Contains information about the current location and status of the started touch.
  */
 typedef struct {
     /**
-     * @brief Value of the x coordinate of the current touch location.
+     * Value of the x coordinate of the current touch location.
      */
     CGFloat x;
     /**
-     * @brief Value of the y coordinate of the current touch location.
+     * Value of the y coordinate of the current touch location.
      */
     CGFloat y;
     /**
-     * @brief The status, i.e., touch type, of the touch.
+     * The status, i.e., touch type, of the touch.
      */
     TouchType type;
 } TouchInfo;
 
+/**
+ * Properties related to face tracking initialization.
+ *
+ * Pass to ``DeepAR/DeepAR/setFaceTrackingInitParameters:``.
+ */
 typedef struct {
     /**
      * Engine will initialize face tracking as soon as possible if true.
@@ -242,386 +314,521 @@ typedef struct {
 } FaceTrackingInitParameters;
 
 /**
- * @brief A delegate that is used to notify events from DeepAR to the consumer of the DeepAR SDK.
- * @details It is set on @link DeepAR @endlink or @link ARView @endlink.
+ * A delegate that is used to notify events from DeepAR to the consumer of the DeepAR SDK.
+ *
+ * It is set on ``DeepAR/DeepAR/delegate``
  */
 @protocol DeepARDelegate <NSObject>
+
+// We must put @optional before every delagate method because DocC otherwise marks them as required.
+// This issue has been fixed in DocC (see: https://github.com/apple/swift-docc/issues/182), but is not yet part of Xcode.
+@optional
+
+#if TARGET_OS_IOS
+/**
+ * Called when DeepAR has finished taking a screenshot.
+ *
+ * - Parameter screenshot: The taken screenshot.
+ */
+- (void)didTakeScreenshot:(UIImage*)screenshot;
+#elif TARGET_OS_OSX
+/**
+ * Called when DeepAR has finished taking a screenshot.
+ *
+ * - Parameter screenshot: The taken screenshot.
+ */
+- (void)didTakeScreenshot:(NSImage*)screenshot;
+#endif
 
 @optional
 
 /**
- * @brief Called when DeepAR has finished taking a screenshot.
- * @details The result is given as an <a href="https://developer.apple.com/documentation/uikit/uiimage">UIImage</a> object in the <i>screenshot</i> parameter.
- * @param UIImage* screenshot The taken screenshot.
- */
-- (void)didTakeScreenshot:(UIImage*)screenshot;
-
-/**
- * @brief Called when the DeepAR engine initialization is complete.
+ * Called when the DeepAR engine initialization is complete.
  */
 - (void)didInitialize;
 
+@optional
+
 /**
- * @brief Called when DeepAR detects a new face or loses a face that has been tracked.
- * @param BOOL faceVisible Any face visibility.
+ * Called when DeepAR detects a new face or loses a face that has been tracked.
+ *
+ * - Parameter faceVisible: True if face is visible in the scene, false otherwise..
  */
 - (void)faceVisiblityDidChange:(BOOL)faceVisible;
 
+@optional
+
 /**
- * @brief Called when a new processed frame is available.
- * @details Make sure to call @link DeepAR::startCaptureWithOutputWidth:outputHeight:subframe: startCaptureWithOutputWidth @endlink on @link DeepAR @endlink (or @link ARView::startFrameOutputWithOutputWidth:outputHeight:subframe: startFrameOutputWithOutputWidth @endlink if you use @link ARView @endlink) if you want this method to be called whenever a new frame is ready.
- * @param CMSampleBufferRef sampleBuffer New frame.
+ * Called when a new processed frame is available.
+ *
+ * > Important: To start receiving this delegate method call ``DeepAR/DeepAR/startCaptureWithOutputWidth:outputHeight:subframe:``.
+ *
+ * - Parameter sampleBuffer: New frame.
  */
 - (void)frameAvailable:(CMSampleBufferRef)sampleBuffer;
 
+@optional
+
 /**
- * @brief Called on each frame where at least one face data is detected.
- * @param MultiFaceData faceData The face data.
+ * Called on each frame where at least one face data is detected.
+ *
+ * > Important: In order for this delegate to be invoked, the face tracking in DeepAR needs to be working. This is usually started with loading some face filter.
+ *
+ * - Parameter faceData: The face data.
  */
 - (void)faceTracked:(MultiFaceData)faceData;
 
+@optional
+
 /**
- * @brief Whenever a face is detected or lost from the scene this method is called.
- * @param NSInteger facesVisible The number of currently detected faces in the frame.
+ * Whenever a face is detected or lost from the scene this method is called.
+ *
+ * - Parameter facesVisible: The number of currently detected faces in the frame.
  */
 - (void)numberOfFacesVisibleChanged:(NSInteger)facesVisible;
 
+@optional
+
 /**
- * @brief DeepAR has successfully shut down after the method shutdown call.
+ * DeepAR has successfully shut down after the method shutdown call.
+ *
+ * This is called after ``DeepAR/DeepAR/shutdown``.
  */
 - (void)didFinishShutdown;
 
+@optional
+
 /**
- * @brief DeepAR has the ability to track arbitrary images in the scene.
- * @param NSString* gameObjectName The name of the node in the filter file to which the image is associated.
- * @param BOOL imageVisible New visibility.
+ * Called when the tracked image changes visibility.
+ *
+ * > Warning: This delegate is not being used at all.
+ *
+ * - Parameter gameObjectName: The name of the node in the filter file to which the image is associated.
+ * - Parameter imageVisible: True if image is visible, false otherwise..
  */
 - (void)imageVisibilityChanged:(NSString*)gameObjectName imageVisible:(BOOL)imageVisible; // TODO: explore further
 
+@optional
+
 /**
- * @brief Called when the @link DeepAR::switchEffectWithSlot:path: switchEffect @endlink method has successfully switched given effect on a given slot.
- * @param NSString* slot The slot name.
+ * Called when the effect is fully switched (loaded) and ready for preview.
+ *
+ * This delegate is called after call to ``DeepAR/DeepAR/switchEffectWithSlot:path:`` and other `switchEffect` methods.
+ *
+ * - Parameter slot: The slot name of the loaded effect.
  */
 - (void)didSwitchEffect:(NSString*)slot;
 
+@optional
+
 /**
- * @brief Called when the conditions have been met for the animation to transition to the next state (e.g. mouth open, emotion detected etc.).
- * @param NSString* state The state name.
+ * Called when the conditions have been met for the animation to transition to the next state (e.g. mouth open, emotion detected etc.).
+ *
+ * - Parameter state: The state name.
  */
 - (void)animationTransitionedToState:(NSString*)state;
 
+@optional
+
 /**
- * @brief Called when DeepAR has started video recording (after calling @link DeepAR::startVideoRecordingWithOutputWidth:outputHeight: startVideoRecording @endlink method).
+ * Called when DeepAR has started video recording.
+ *
+ * Called after the call to ``DeepAR/DeepAR/startVideoRecordingWithOutputWidth:outputHeight:`` and other `startVideoRecording` methods.
  */
 - (void)didStartVideoRecording;
 
+@optional
+
 /**
- * @brief Called when the video recording preparation is finished.
+ * Called when the video recording preparation is finished.
  */
 - (void)didFinishPreparingForVideoRecording;
 
+@optional
+
 /**
- * @brief Called when the video recording is finished.
- * @param NSString* videoFilePath The video file path.
+ * Called when the video recording is finished.
+ *
+ * Called after the call to ``DeepAR/DeepAR/finishVideoRecording``.
+ *
+ * - Parameter videoFilePath: The video file path.
  */
 - (void)didFinishVideoRecording:(NSString*)videoFilePath;
 
+@optional
+
 /**
- * @brief Called when an error has occurred during video recording.
- * @param NSError* error The video recording error.
+ * Called when an error has occurred during video recording.
+ *
+ * - Parameter error: The video recording error.
  */
 - (void)recordingFailedWithError:(NSError*)error;
 
+@optional
+
 /**
- * @brief Called when an error has occurred.
- * @param ARErrorType code Error type.
- * @param NSString* error Error message.
+ * Called when an error has occurred within DeepAR SDK.
+ *
+ * - Parameter code: Error type.
+ * - Parameter error: Error message.
  */
 - (void)onErrorWithCode:(ARErrorType)code error:(NSString*)error;
 
 @end
 
-#define ARViewDelegate DeepARDelegate
-
 /**
- * @brief Main class for interacting with DeepAR engine.
- * @details You need to create an instance of this class to interact with DeepAR. DeepAR can work in vision only or rendering mode. Vision only means only computer vision functionalities (like @link FaceData @endlink of detected faces etc.) are available and no rendering. Rendering mode means that result of DeepAR processing will be rendered live in the UI. Different initialization methods are used for each mode.
+ * Main class for interacting with DeepAR engine.
+ *
  */
 @interface DeepAR : NSObject
 
 /**
- * @brief The object which implements @link DeepARDelegate @endlink protocol to listen for async events coming from DeepAR.
+ * The object which implements ``DeepARDelegate`` protocol to listen for async events coming from DeepAR.
  */
 @property (nonatomic, weak) id<DeepARDelegate> delegate;
 
 /**
- * @brief Indicates if computer vision components have been initialized during the initialization process.
+ * Indicates if computer vision components have been initialized during the initialization process.
  */
 @property (nonatomic, readonly) BOOL visionInitialized;
 
 /**
- * @brief Indicates if DeepAR rendering components have been initialized during the initialization process.
+ * Indicates if DeepAR rendering components have been initialized during the initialization process.
  */
 @property (nonatomic, readonly) BOOL renderingInitialized;
 
 /**
- * @brief Indicates if at least one face is detected in the current frame.
+ * Indicates if at least one face is detected in the current frame.
  */
 @property (nonatomic, readonly) BOOL faceVisible;
 
 /**
- * @brief Rendering resolution with which the DeepAR has been initialized.
+ * Rendering resolution with which the DeepAR has been initialized.
  */
 @property (nonatomic, readonly) CGSize renderingResolution;
 
 /**
- * @brief If set to true, changes how @link DeepAR::startVideoRecordingWithOutputWidth:outputHeight: startVideoRecording @endlink and @link resumeVideoRecording @endlink methods work to allow the video recording to be started immediately during runtime
- * @details To use video recodring warmup follow these steps
- * - Set videoRecordingWarmupEnabled = true after calling deepar.initialize
- * @code
- * - (void)viewDidLoad {
- *  self.deepAR = [[DeepAR alloc] init];
- *  self.deepAR.videoRecordingWarmupEnabled = YES;
- * ...
- * }
- * @endcode
- * - After initialization is finished (@link DeepARDelegate::didInitialize didInitialize @endlink callback) call @link DeepAR::startVideoRecordingWithOutputWidth:outputHeight: startVideoRecording @endlink with desired parameters. Only needs to be called once.
- * @code
- * - (void)didInitialize {
- *     [self.deepAR startVideoRecordingWithOutputWidth:outputWidth outputHeight:outputHeight subframe:screenRect];
- *  }
- *  @endcode
- * - Wait for @link DeepARDelegate::didFinishPreparingForVideoRecording didFinishPreparingForVideoRecording @endlink callback (now working as expected) to enable recording
- * - Call @link resumeVideoRecording @endlink to start prepared recording
- * @code
- *  - (IBAction)startVideoRecordingPressed:(id)sender {
- *     // Start prepared recording
- *     [self.deepAR resumeVideoRecording];
- * }
- * @endcode
+ * If enabled, this removes the lag that occures when starting to record first video with DeepAR.
  *
- * - Call @link finishVideoRecording @endlink to finish recording. This will automatically start preparing for the next recording session with the parameters set in @link DeepAR::startVideoRecordingWithOutputWidth:outputHeight: startVideoRecording @endlink.
- * @code
- * - (IBAction)stopVideoRecordingPressed:(id)sender {
- *    //Finish recording. This will automatically start preparing for the next recording session with the same parameters
- *     [self.deepAR finishVideoRecording];
+ * If set to true, ``startVideoRecordingWithOutputWidth:outputHeight:`` and other video recording methods work
+ * to allow the video recording to be started immediately during runtime
+ *
+ * To use video recodring warmup follow these steps
+ * 1. Set videoRecordingWarmupEnabled = true after calling `DeepAR()`
+ * ```swift
+ * override func viewDidLoad() {
+ *  self.deepAR = DeepAR()
+ *  self.deepAR.videoRecordingWarmupEnabled = true
  * }
- * @endcode
- * - Wait for @link DeepARDelegate::didFinishPreparingForVideoRecording didFinishPreparingForVideoRecording @endlink callback and repeat the resumeVideoRecording step as needed
+ * ```
+ * 2. After DeepAR is initialized (``DeepARDelegate/didInitialize``)
+ * call ``startVideoRecordingWithOutputWidth:outputHeight:`` or any other video recording methods with desired parameters.
+ * Only needs to be called once.
+ * ```swift
+ * func didInitialize {
+ *     self.deepAR.startVideoRecording(withOutputWidth:outputWidth, outputHeight:outputHeight, subframe:screenRect)
+ * }
+ *  ```
+ * 3. Wait for ``DeepARDelegate/didFinishPreparingForVideoRecording`` delegate method to enable recording.
+ * 4. Call ``resumeVideoRecording``.
+ * 5. Call ``finishVideoRecording``. This will automatically start preparing for the next recording session with the parameters set in ``startVideoRecordingWithOutputWidth:outputHeight:``.
+ * 6. Wait for ``DeepARDelegate/didFinishVideoRecording:`` delegate method and repeat the resumeVideoRecording step as needed
  */
 @property (nonatomic, assign) BOOL videoRecordingWarmupEnabled;
 
 /**
- * @brief The audio compression settings.
+ * The audio compression settings.
  */
 @property (nonatomic, strong) NSDictionary* audioCompressionSettings;
 
 /**
- * @brief Set the license key for your app.
- * @details The license key is generated on the DeepAR Developer portal. Here are steps on how to generate a license key:
- * - Log in/Sign up to developer.deepar.ai
- * - Create a new project and in that project create an iOS app
- * - In the create app dialog enter your app name and bundle id that your app is using. Bundle id must match the one you are using in your app, otherwise, the license check will fail. Read more about iOS bundle id <a href="https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids">here</a>.
- * - Copy the newly generated license key as a parameter in this method
- * @details You must call this method before you call the @link initialize @endlink.
- * @param NSString* key The license key.
+ * The DeepAR SDK version number.
+ *
+ * - Returns: DeepAR SDK version number string.
+ */
++ (NSString*) sdkVersion;
+
+/**
+ * Set the license key for your app.
+ *
+ * The license key is generated on the DeepAR Developer portal. Here are steps on how to generate a license key:
+ * 1. Log in/Sign up to [DeepAR Developer Portal](https://developer.deepar.ai/).
+ * 2. Create a new project and in that project create an iOS app.
+ * 3. In the create app dialog enter your app name and bundle id that your app is using. Bundle id must match the one you are using in your app, otherwise, the license check will fail. Read more about iOS bundle id [here](https://developer.apple.com/documentation/appstoreconnectapi/bundle_ids).
+ * 4. Copy the newly generated license key as a parameter in this method.
+ *
+ * > Important:  You must call this method before you call the ``createARViewWithFrame:`` or any other initialization methods.
+ *
+ * - Parameter key: The license key.
  */
 - (void)setLicenseKey:(NSString*)key;
 
+#if TARGET_OS_IOS
 /**
- * @brief Starts the engine initialization where the DeepAR will initialize in rendering mode.
- * @details This means users can use the rendering functionality of DeepAR, in addition to computer vision features, to load effects in the scene, render the frames in the UI, etc.
- * @param NSInteger width The rendering width.
- * @param NSInteger height The rendering height.
- * @param CAEAGLLayer* window Destination layer where the DeepAR engine will render the frames.
+ * Initialize DeepAR with a [CAEAGLLayer](https://developer.apple.com/documentation/quartzcore/caeagllayer) as rendering target.
+ *
+ * > Tip: Consider using ``createARViewWithFrame:`` which will create the `UIView` for you.
+ *
+ * - Parameter width: The rendering width.
+ * - Parameter height: The rendering height.
+ * - Parameter window: Destination layer where the DeepAR engine will render the frames.
  */
 - (void)initializeWithWidth:(NSInteger)width height:(NSInteger)height window:(CAEAGLLayer*)window;
+#elif TARGET_OS_OSX
+/**
+ * Initialize DeepAR with a [NSOpenGLContext](https://developer.apple.com/documentation/appkit/nsopenglcontext) as rendering target.
+ *
+ * > Tip: Consider using ``initializeViewWithFrame:`` which will create the `NSView` for you.
+ *
+ * - Parameter width: The rendering width.
+ * - Parameter height: The rendering height.
+ * - Parameter context: OpenGL context where the DeepAR engine will render the frames.
+ */
+- (void)initializeWithWidth:(NSInteger)width height:(NSInteger)height context:(NSOpenGLContext*)context;
+#endif
 
 /**
- * @brief Starts the engine initialization where the DeepAR will initialize in vision only mode.
- * @details Vision only means that it will process frames in terms of detecting faces and their properties that are available in @link FaceData @endlink object. No rendering will be available in this mode.
+ * Initialize DeepAR in vision-only mode.
+ *
+ * Vision-only mode doesn't do any rendering and/or camera preview. It is used just to get the ML tracking information from DeepAR..
  */
 - (void)initialize;
 
 /**
- * @brief Starts the engine initialization for rendering in off-screen mode.
- * @param NSInteger width The rendering width.
- * @param NSInteger height The rendering height.
+ * Starts the engine initialization for rendering in off-screen mode.
+ *
+ *  Frames will be produced in ``DeepARDelegate/frameAvailable:`` delegate method.
+ *
+ * - Parameter width: The rendering width.
+ * - Parameter height: The rendering height.
  */
 - (void)initializeOffscreenWithWidth:(NSInteger)width height:(NSInteger)height;
 
+#if TARGET_OS_IOS
 /**
- * @brief Starts the engine initialization where the DeepAR will initialize in rendering mode.
- * @details This means users can use the rendering functionality of DeepAR, in addition to computer vision features, to load effects in the scene, render the frames in the UI, etc. This method returns an <a href="https://developer.apple.com/documentation/uikit/uiview">UIView</a> on which surface the frames will be rendered. Internally this method uses @link initializeWithWidth:height:window: initializeWithWidth @endlink, which means the rendering resolution and the size of the view will be the size of the provided frame.
- * @param CGRect frame The view dimensions.
- * @return UIView* The surface where the DeepAR frames will be rendered.
+ * Initialize DeepAR and render the AR preview in the `UIView`.
+ *
+ * - Parameter frame: The view dimensions.
+ * - Returns: The `UIView` where the DeepAR frames will be rendered.
  */
 - (UIView*)createARViewWithFrame:(CGRect)frame;
+#elif TARGET_OS_OSX
+/**
+ * Initialize DeepAR and render the AR preview in the `NSView`.
+ *
+ * - Parameter frame: The view dimensions.
+ * - Returns: The `NSView` where the DeepAR frames will be rendered.
+ */
+- (NSView*)initializeViewWithFrame:(NSRect)frame;
+#endif
 
 /**
- * @brief Indicates if DeepAR has been initialized in the vision-only mode or not.
- * @return BOOL Indication if the vision-only mode is active.
+ * Indicates if DeepAR has been initialized in the vision-only mode or not.
+ *
+ * - Returns: Indication if the vision-only mode is active.
  */
 - (BOOL)isVisionOnly;
 
 /**
- * @brief Changes the output resolution of the processed frames.
- * @details Can be called any time.
- * @param NSInteger width The output resolution width.
- * @param NSInteger height The output resolution height.
+ * Changes the output resolution of the processed frames.
+ *
+ * > Note: Can be called any time.
+ *
+ * - Parameter width: The output resolution width.
+ * - Parameter height: The output resolution height.
  */
 - (void)setRenderingResolutionWithWidth:(NSInteger)width height:(NSInteger)height;
 
 /**
- * @brief Shuts down the DeepAR engine.
- * @details Reinitialization of a new DeepAR instance which has not been properly shut down can cause crashes and memory leaks. Usually, it is done in view controller <i>dealloc</i> method.
+ * Shuts down the DeepAR engine.
+ *
+ * > Warning: Reinitialization of a new DeepAR instance which has not been properly shut down can cause crashes and memory leaks. Usually, it is done in view controller `dealloc` method.
  */
 - (void)shutdown;
 
+#if TARGET_OS_IOS
 /**
- * @brief Returns new <a href="https://developer.apple.com/documentation/uikit/uiview">UIView</a> in which DeepAR will render with a given frame size.
- * @details User can position the returned <a href="https://developer.apple.com/documentation/uikit/uiview">UIView</a> in the hierarchy to display the results in the app UI.
- * @param CGRect frame The frame size.
- * @return UIView* The new <a href="https://developer.apple.com/documentation/uikit/uiview">UIView</a> in which DeepAR will render with a given frame size.
+ * Switch DeepAR rendering to `UIView`.
+ *
+ * - Parameter frame: The frame size.
+ * - Returns: The new `UIView` in which DeepAR will render with a given frame size.
  */
 - (UIView*)switchToRenderingToViewWithFrame:(CGRect)frame;
+#elif TARGET_OS_OSX
+/**
+ * Switch DeepAR rendering to `NSView`.
+ *
+ * - Parameter frame: The frame size.
+ * - Returns: The new `NSView` in which DeepAR will render with a given frame size.
+ */
+- (NSView*)switchToRenderingToViewWithFrame:(CGRect)frame;
+#endif
 
 /**
- * @brief Starts rendering in the off-screen buffer.
- * @details Does nothing if already rendering in off-screen mode. Internally calls @link startCaptureWithOutputWidth:outputHeight:subframe: startCaptureWithOutputWidth @endlink method meaning the frames will be available in the @link DeepARDelegate:frameAvailable: frameAvailable @endlink method as soon as they are ready.
- * @param NSInteger width The buffer width.
- * @param NSInteger height The buffer height.
+ * Starts rendering in the off-screen buffer.
+ *
+ * Frames will be produced in ``DeepARDelegate/frameAvailable:`` delegate method.
+ *
+ * - Parameter width: The buffer width.
+ * - Parameter height: The buffer height.
  */
 - (void)switchToRenderingOffscreenWithWidth:(NSInteger)width height:(NSInteger)height;
 
 /**
- * @brief An optimization method and it allows the user to indicate the DeepAR in which mode it should operate.
- * @details If called with true value, DeepAR will expect a continuous flow of new frames and it will optimize its inner processes for such workload. An example of this is the typical use case of processing the frames from the camera stream.
- * @details If called with false it will optimize for preserving resources and memory by pausing the rendering after each processed frame. A typical use case for this is when the user needs to process just one image. In that case, the user will feed the image to DeepAR by calling @link processFrame:mirror: processFrame @endlink or similar method, and DeepAR would process it and stop rendering until a new frame is received. If we did so when the DeepAR is in live mode, it would process the same frame over and over again without ever stopping the rendering process, thus wasting processing time.
- * @param BOOL liveMode Enable or disable live mode.
+ * An optimization method and it allows the user to indicate the DeepAR in which mode it should operate.
+ *
+ * If called with true value, DeepAR will expect a continuous flow of new frames and it will optimize its inner processes for such workload.
+ * An example of this is the typical use case of processing the frames from the camera stream.
+ * If called with false it will optimize for preserving resources and memory by pausing the rendering after each processed frame.
+ * A typical use case for this is when the user needs to process just one image. In that case, the user will feed the image to DeepAR by calling ``processFrame:mirror:``
+ * or similar method, and DeepAR would process it and stop rendering until a new frame is received. If we did so when the DeepAR is in live mode,
+ * it would process the same frame over and over again without ever stopping the rendering process, thus wasting processing time.
+ *
+ * - Parameter liveMode: Enable or disable live mode.
  */
 - (void)changeLiveMode:(BOOL)liveMode;
 
 /**
- * @brief Resumes the rendering if it was previously paused, otherwise doesn't do anything.
+ * Resumes the rendering if it was previously paused, otherwise doesn't do anything.
  */
 - (void)resume;
 
 /**
- * @brief Pauses the rendering.
- * @details This method will not release any resources and should be used only for temporary pause (e.g. user goes to the next screen). Use the @link shutdown @endlink method to stop the engine and to release the resources. 
+ * Pauses the rendering.
+ *
+ * This method will not release any resources and should be used only for temporary pause (e.g. user goes to the next screen).
+ * Use the``shutdown`` method to stop the engine and to release the resources.
  */
 - (void)pause;
 
 /**
- * @brief Feed frame to DeepAR for processing.
- * @details The result can be received in the @link DeepARDelegate::frameAvailable: frameAvailable @endlink delegate method.
- * @param CVPixelBufferRef imageBuffer The input image data that needs processing.
- * @param BOOL mirror Indicates whether the image should be flipped vertically before processing (front/back camera).
+ * Feed frame to DeepAR for processing.
+ *
+ * - Parameter imageBuffer: The input image data that needs processing.
+ * - Parameter mirror: Indicates whether the image should be flipped vertically before processing (front/back camera).
  */
 - (void)processFrame:(CVPixelBufferRef)imageBuffer mirror:(BOOL)mirror;
 
 /**
- * @brief Feed frame to DeepAR for processing.
- * @details The result can be received in the @link DeepARDelegate::frameAvailable: frameAvailable @endlink delegate method.
- * @param CVPixelBufferRef imageBuffer The input image data that needs processing.
- * @param BOOL mirror Indicates whether the image should be flipped vertically before processing (front/back camera).
- * @param CMTimeValue timestamp The frame timestamp.
+ * Feed frame to DeepAR for processing.
+ *
+ * - Parameter imageBuffer: The input image data that needs processing.
+ * - Parameter mirror: Indicates whether the image should be flipped vertically before processing (front/back camera).
+ * - Parameter timestamp: The frame timestamp.
  */
 - (void)processFrame:(CVPixelBufferRef)imageBuffer mirror:(BOOL)mirror timestamp:(CMTimeValue)timestamp;
 
 /**
- * @brief Feed frame to DeepAR for processing.
- * @details Outputs the result in the <i>outputBuffer</i> parameter. Requires frame capturing to be started (user must call @link startCaptureWithOutputWidth:outputHeight:subframe: startCaptureWithOutputWidth @endlink or @link startCaptureWithOutputWidthAndFormat:outputHeight:subframe:outputImageFormat: startCaptureWithOutputWidthAndFormat @endlink beforehand).
- * @param CVPixelBufferRef imageBuffer The input image data that needs processing.
- * @param CVPixelBufferRef outputBuffer The output image buffer.
- * @param BOOL mirror Indicates whether the image should be flipped vertically before processing (front/back camera).
+ * Feed frame to DeepAR for processing.
+ *
+ * Outputs the result in the `outputBuffer` parameter.
+ * Requires frame capturing to be started (user must call ``startCaptureWithOutputWidth:outputHeight:subframe:`` beforehand).
+ *
+ * - Parameter imageBuffer: The input image data that needs processing.
+ * - Parameter outputBuffer: The output image buffer.
+ * - Parameter mirror: Indicates whether the image should be flipped vertically before processing (front/back camera).
  */
 - (void)processFrameAndReturn:(CVPixelBufferRef)imageBuffer outputBuffer:(CVPixelBufferRef)outputBuffer mirror:(BOOL)mirror;
 
 /**
- * @brief Same functionality as @link processFrame:mirror: processFrame @endlink with <a href="https://developer.apple.com/documentation/coremedia/cmsamplebufferref">CMSampleBufferRef</a> as an input type for frame data which is more suitable if using camera frames via <a href="https://developer.apple.com/documentation/avfoundation?language=objc">AVFoundation</a>.
- * @details It is advised to use this method instead of @link processFrame:mirror: processFrame @endlink when using camera frames as input because it will use native textures to fetch frames from the iPhone camera more efficiently.
- * @param CMSampleBufferRef sampleBuffer The sample buffer.
- * @param BOOL mirror Indicates whether the image should be flipped vertically before processing (front/back camera).
+ * Enqueue camera frame for processing by DeepAR.
+ *
+ * - Parameter sampleBuffer: The sample buffer.
+ * - Parameter mirror: Indicates whether the image should be flipped vertically before processing (front/back camera).
  */
 - (void)enqueueCameraFrame:(CMSampleBufferRef)sampleBuffer mirror:(BOOL)mirror;
 
 /**
- * @brief Passes an audio sample to the DeepAR engine.
- * @details Used in video recording when user wants to record audio too. Audio samples will be processed only if the @link startCaptureWithOutputWidth:outputHeight:subframe: startVideoRecordingWithOutputWidth @endlink method has been called with <i>recordAudio</i> parameter set to true.
- * @param CMSampleBufferRef sampleBuffer The sample buffer.
+ * Enqueue an audio sample to the DeepAR engine.
+ *
+ * Used in video recording when user wants to record audio too. Audio samples will be processed only
+ * if the ``startVideoRecordingWithOutputWidth:outputHeight:subframe:videoCompressionProperties:recordAudio:``
+ * method has been called with `recordAudio` parameter set to true.
+ *
+ * - Parameter sampleBuffer: The sample buffer.
  */
 - (void)enqueueAudioSample:(CMSampleBufferRef)sampleBuffer;
 
 /**
- * @brief Sets the video recording file output name.
- * @details The argument is file name only, no extension. The file extension <i>.mov</i> will be appended automatically. Defalut value is <i>"export"</i>.
- * @param NSString* outputName Output file name without the extension.
+ * Sets the video recording file output name.
+ *
+ * The argument is file name only, no extension. The file extension .mov will be appended automatically. Defalut value is *"export"*.
+ *
+ * - Parameter outputName: Output file name without the extension.
  */
 - (void)setVideoRecordingOutputName:(NSString*)outputName;
 
 /**
- * @brief Changes the output path for all video recordings during runtime after it is called.
- * @details The argument is path only, no name. The defalut value is the AppData Documents folder. Example:
- * @code
+ * Changes the output path for all video recordings during runtime after it is called.
+ *
+ * The argument is path only, no name. The defalut value is the AppData Documents folder.
+ *
+ * Example:
+ * ```objc
  * [self.deepAR setVideoRecordingOutputPath:[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject]];
- * @endcode
- * @param NSString* outputPath Output video file path.
+ * ```
+ *
+ * - Parameter outputPath: Output video file path.
  */
 - (void)setVideoRecordingOutputPath:(NSString*)outputPath;
 
 /**
- * @brief Starts video recording of the @link ARView @endlink with given resolution.
- * @param int outputWidth The output width.
- * @param int outputHeight The output height.
+ * Starts video recording of the AR preview with the given resolution.
+ *
+ * - Parameter outputWidth: The output width.
+ * - Parameter outputHeight: The output height.
  */
 - (void)startVideoRecordingWithOutputWidth:(int)outputWidth outputHeight:(int)outputHeight;
 
 /**
- * @brief Starts video recording of the @link ARView @endlink with given resolution.
- * @param int outputWidth The output width.
- * @param int outputHeight The output height.
- * @param CGRect subframe The <i>subframe</i> parameter defines the sub rectangle of the @link ARView @endlink that you want to record in normalized coordinates (0.0 - 1.0).
+ * Starts video recording of the AR preview with the given resolution.
+ *
+ * - Parameter outputWidth: The output width.
+ * - Parameter outputHeight: The output height.
+ * - Parameter subframe: Defines the sub rectangle of the AR preview that you want to record in normalized coordinates (0.0 - 1.0).
  */
 - (void)startVideoRecordingWithOutputWidth:(int)outputWidth outputHeight:(int)outputHeight subframe:(CGRect)subframe;
 
 /**
- * @brief Starts video recording of the @link ARView @endlink with given resolution.
- * @param int outputWidth The output width.
- * @param int outputHeight The output height.
- * @param CGRect subframe The <i>subframe</i> parameter defines the sub rectangle of the @link ARView @endlink that you want to record in normalized coordinates (0.0 - 1.0).
- * @param NSDictionary* videoCompressionProperties The <i>videoCompressionProperties</i> is an <a href="https://developer.apple.com/documentation/foundation/nsdictionary?language=objc">NSDictionary</a> used as the value for the key <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">AVVideoCompressionPropertiesKey</a>. Read more about video compression options in the official docs <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">here</a>.
+ * Starts video recording of the AR preview with the given resolution.
+ *
+ * - Parameter outputWidth: The output width.
+ * - Parameter outputHeight: The output height.
+ * - Parameter subframe: Defines the sub rectangle of the AR preview that you want to record in normalized coordinates (0.0 - 1.0).
+ * - Parameter videoCompressionProperties: A dictionary used as the value for the key [`AVVideoCompressionPropertiesKey`](https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey). Read more about video compression options in the official docs [here](https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey).
  */
 - (void)startVideoRecordingWithOutputWidth:(int)outputWidth outputHeight:(int)outputHeight subframe:(CGRect)subframe videoCompressionProperties:(NSDictionary*)videoCompressionProperties;
 
 /**
- * @brief Starts video recording of the @link ARView @endlink with given resolution.
- * @param int outputWidth The output width.
- * @param int outputHeight The output height.
- * @param CGRect subframe The <i>subframe</i> parameter defines the sub rectangle of the @link ARView @endlink that you want to record in normalized coordinates (0.0 - 1.0).
- * @param NSDictionary* videoCompressionProperties The <i>videoCompressionProperties</i> is an <a href="https://developer.apple.com/documentation/foundation/nsdictionary?language=objc">NSDictionary</a> used as the value for the key <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">AVVideoCompressionPropertiesKey</a>. Read more about video compression options in the official docs <a href="https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey?language=objc">here</a>.
- * @param BOOL recordAudio If <i>recordAudio</i> parameter is set to true the recording will wait until you call @link enqueueAudioSample: enqueueAudioSample @endlink. When DeepAR is ready to receive audio samples it will publish <a href="https://developer.apple.com/documentation/foundation/nsnotification">NSNotification</a> with key <i>deepar_start_audio</i>. You can subscribe to this notification and start feeding audio samples once you receive it. If you use provided @link CameraController @endlink this is handled for you by default.
+ * Starts video recording of the AR preview with given resolution.
+ *
+ * - Parameter outputWidth: The output width.
+ * - Parameter outputHeight: The output height.
+ * - Parameter subframe: Defines the sub rectangle of the AR preview that you want to record in normalized coordinates (0.0 - 1.0).
+ * - Parameter videoCompressionProperties: A dictionary used as the value for the key [`AVVideoCompressionPropertiesKey`](https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey). Read more about video compression options in the official docs [here](https://developer.apple.com/documentation/avfoundation/avvideocompressionpropertieskey).
+ * - Parameter recordAudio: Determines weather the audio is recorded. If DeepAR preview is paired with ``DeepAR/CameraController`` this will work out of the box. Otherwise, if set to true the recording will wait until you call ``enqueueAudioSample:``. When DeepAR is ready to receive audio samples it will publish `NSNotification` with key `deepar_start_audio`. You can subscribe to this notification and start feeding audio samples once you receive it.
  */
 - (void)startVideoRecordingWithOutputWidth:(int)outputWidth outputHeight:(int)outputHeight subframe:(CGRect)subframe videoCompressionProperties:(NSDictionary*)videoCompressionProperties recordAudio:(BOOL)recordAudio;
 
 /**
- * @brief Load a DeepAR Studio file as an effect/filter in the scene.
- * @param NSString* slot The <i>slot</i> specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect. Example of loading 2 effects in the same scene:
- * @code
+ * Load a DeepAR effect file for AR preview.
+ *
+ * Example of loading 2 effects in the same scene:
+ * ```objc
  * [self.deepAR switchEffectWithSlot:@"mask" path:"flowers"];
  * [self.deepAR switchEffectWithSlot:@"filter" path:"tv80"];
- * @endcode
- * @param NSString* path The <i>path</i> is a string path to a file located in the app bundle or anywhere in the filesystem where the app has access to. For example, one can download the filters from online locations and save them in the Documents directory. Value <i>nil</i> for the <i>path</i> param will remove the effect from the scene.
+ * ```
+ *
+ * - Parameter slot: Specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
+ * - Parameter path: Path to a file located in the app bundle or anywhere in the filesystem where the app has access to. Value `nil` will remove the effect from the scene. For example, one can download the filters from online locations and save them in the Documents directory.
  */
 - (void)switchEffectWithSlot:(NSString*)slot path:(NSString*)path;
 
 /**
- * @brief Load a DeepAR Studio file as an effect/filter in the scene.
- * @param NSString* slot The <i>slot</i> specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
- * @param NSString* path The <i>path</i> is a string path to a file located in the app bundle or anywhere in the filesystem where the app has access to. For example, one can download the filters from online locations and save them in the Documents directory. Value <i>nil</i> for the <i>path</i> param will remove the effect from the scene.
- * @param NSInteger face The <i>face</i> parameter indicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect. Example: 
- * @code
+ * Load a DeepAR effect file for AR preview.
+ *
+ * Example:
+ * ```objc
  * // apply flowers effect to the first face
  * [self.deepAR switchEffectWithSlot:@"mask_f0" path:"flowers" face:0];
  * // apply beard effect to the second face
@@ -630,215 +837,549 @@ typedef struct {
  * [self.deepAR switchEffectWithSlot:@"mask_f0" path:"lion" face:0];
  * // remove the beard effect from the second face
  * [self.deepAR switchEffectWithSlot:@"mask_f1" path:nil face:1];
- * @endcode
+ * ```
+ *
+ * - Parameter slot: Specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
+ * - Parameter path: Path to a file located in the app bundle or anywhere in the filesystem where the app has access to. Value `nil` will remove the effect from the scene. For example, one can download the filters from online locations and save them in the Documents directory.
+ * - Parameter face: Indicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect.
+ *
  */
 - (void)switchEffectWithSlot:(NSString*)slot path:(NSString*)path face:(NSInteger)face;
 
 /**
- * @brief Load a DeepAR Studio file as an effect/filter in the scene.
- * @param NSString* slot The <i>slot</i> specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
- * @param NSString* path The <i>path</i> is a string path to a file located in the app bundle or anywhere in the filesystem where the app has access to. For example, one can download the filters from online locations and save them in the Documents directory. Value <i>nil</i> for the <i>path</i> param will remove the effect from the scene.
- * @param NSInteger face The <i>face</i> parameter indicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect.
- * @param NSString* targetGameObject The <i>targetGameObject</i> parameter indicates a node in the currently loaded scene/effect into which the new effect will be loaded. By default, effects are loaded in the root node object.
+ * Load a DeepAR effect file for AR preview.
+ *
+ * - Parameter slot: Specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
+ * - Parameter path: Path to a file located in the app bundle or anywhere in the filesystem where the app has access to. Value `nil` will remove the effect from the scene. For example, one can download the filters from online locations and save them in the Documents directory.
+ * - Parameter face: Indicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect.
+ * - Parameter targetGameObject: Indicates a node in the currently loaded scene/effect into which the new effect will be loaded. By default, effects are loaded in the root node object.
  */
 - (void)switchEffectWithSlot:(NSString*)slot path:(NSString*)path face:(NSInteger)face targetGameObject:(NSString*)targetGameObject;
 
 /**
- * @brief Load contents of a DeepAR Studio file as an effect/filter in the scene.
- * @param NSString* slot The <i>slot</i> specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
- * @param NSData* data The contents of the file.
+ * Load a DeepAR effect file for AR preview.
+ *
+ * - Parameter slot: Specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
+ * - Parameter data: The contents of the file.
  */
 - (void)switchEffectWithSlot:(NSString*)slot data:(NSData*)data;
 
 /**
- * @brief Load contents of a DeepAR Studio file as an effect/filter in the scene.
- * @param NSString* slot The <i>slot</i> specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
- * @param NSData* data The contents of the file.
- * @param NSInteger face The <i>face</i> parameter indicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect.
+ * Load a DeepAR effect file for AR preview.
+ *
+ * - Parameter slot: Specifies a namespace for the effect in the scene. In each slot, there can be only one effect. If you load another effect in the same slot the previous one will be removed and replaced with a new effect.
+ * - Parameter data: The contents of the file.
+ * - Parameter face: Iindicates on which face to apply the effect. DeepAR offers tracking up to 4 faces, so valid values for this parameter are 0, 1, 2, and 3. For example, if you call this method with face value 2, the effect will be only applied to the third detected face in the scene. If you want to set an effect on a different face make sure to also use a different value for the slot parameter to avoid removing the previously added effect.
  */
 - (void)switchEffectWithSlot:(NSString*)slot data:(NSData*)data face:(NSInteger)face;
 
 /**
- * @brief Produces a snapshot of the current screen preview.
- * @details Resolution is equal to the dimension with which the @link DeepAR @endlink has been initialized. The @link DeepARDelegate @endlink method @link DeepARDelegate::didTakeScreenshot: didTakeScreenshot @endlink will be called upon successful screenshot capture is finished with a path where the image has been temporarily stored. 
+ * Produces a image of the current AR preview.
+ *
+ * The image is produced in ``DeepARDelegate/didTakeScreenshot:`` delegate method.
  */
 - (void)takeScreenshot;
 
 /**
- * @brief Finishes the video recording.
- * @details Delegate method @link DeepARDelegate::didFinishVideoRecording: didFinishVideoRecording @endlink will be called when the recording is done with the temporary path of the recorded video.
+ * Finishes the video recording.
+ *
+ * The video is produced in ``DeepARDelegate/didFinishVideoRecording:`` delegate method.
  */
 - (void)finishVideoRecording;
 
 /**
- * @brief Pauses video recording if it has been started beforehand.
+ * Pauses video recording if it has been started beforehand.
  */
 - (void)pauseVideoRecording;
 
 /**
- * @brief Resumes video recording after it has been paused with @link pauseVideoRecording @endlink.
+ * Resumes video recording after it has been paused.
  */
 - (void)resumeVideoRecording;
 
 /**
- * @brief Enables or disables audio pitch processing for video recording.
- * @param BOOL enabled Enable or disable audio processing.
+ * Enables or disables audio pitch processing for video recording.
+ *
+ * - Parameter enabled: Enable or disable audio processing.
  */
 - (void)enableAudioProcessing:(BOOL)enabled;
 
 /**
- * @brief Sets the pitch change amount.
- * @details Negative values will make the recorded audio lower in pitch and positive values will make it higher in pitch. Must call @link enableAudioProcessing: enableAudioProcessing @endlink to enable the pitch processing beforehand.
- * @param float sts The pitch change amount.
+ * Sets the pitch change amount.
+ *
+ * Negative values will make the recorded audio lower in pitch and positive values will make it higher in pitch.
+ * Must call ``enableAudioProcessing:`` to enable the pitch processing beforehand.
+ *
+ *- Parameter sts: The pitch change amount.
  */
 - (void)setAudioProcessingSemitone:(float)sts;
 
 /**
- * @brief Enables @link DeepARDelegate::frameAvailable: frameAvailable @endlink method callback.
- * @details By default @link DeepARDelegate @endlink will not call @link DeepARDelegate::frameAvailable: frameAvailable @endlink method on each new processed frame to save on processing time and resources. If we want the processed frames to be available in @link DeepARDelegate::frameAvailable: frameAvailable @endlink method of @link DeepARDelegate @endlink we need to call this method first on @link DeepAR @endlink.
- * @param NSInteger outputWidth The width of the processed frames.
- * @param NSInteger outputHeight The height of the processed frames.
- * @param CGRect subframe The subrectangle of @link ARView @endlink which will be outputted. This means that the output frame in @link DeepARDelegate::frameAvailable: frameAvailable @endlink does not need to be the same size and/or position as the one rendered to the @link ARView @endlink.
+ * Starts capturing the AR preview frames in the image buffer.
+ *
+ * Images are produced in the ``DeepARDelegate/frameAvailable:`` delegate method.
+ *
+ * - Parameter outputWidth: The width of the processed frames.
+ * - Parameter outputHeight: The height of the processed frames.
+ * - Parameter subframe: The subrectangle of AR preview which will be outputted. This means that the output frame in ``DeepARDelegate/frameAvailable:`` does not need to be the same size and/or position as the one rendered to the AR preview.
  */
 - (void)startCaptureWithOutputWidth:(NSInteger)outputWidth outputHeight:(NSInteger)outputHeight subframe:(CGRect)subframe;
 
 /**
- * @brief Enables @link DeepARDelegate::frameAvailable: frameAvailable @endlink method callback.
- * @details By default @link DeepARDelegate @endlink will not call @link DeepARDelegate::frameAvailable: frameAvailable @endlink method on each new processed frame to save on processing time and resources. If we want the processed frames to be available in @link DeepARDelegate::frameAvailable: frameAvailable @endlink method of @link DeepARDelegate @endlink we need to call this method first on @link DeepAR @endlink.
- * @param NSInteger outputWidth The width of the processed frames.
- * @param NSInteger outputHeight The height of the processed frames.
- * @param CGRect subframe The subrectangle of @link ARView @endlink which will be outputted. This means that the output frame in @link DeepARDelegate::frameAvailable: frameAvailable @endlink does not need to be the same size and/or position as the one rendered to the @link ARView @endlink.
- * @param OutputFormat outputFormat Parameter for user to control the pixel output format of @link DeepARDelegate::frameAvailable: frameAvailable @endlink method
+ * Starts capturing the AR preview frames in the image buffer.
+ *
+ * Images are produced in the ``DeepARDelegate/frameAvailable:`` delegate method.
+ *
+ * - Parameter outputHeight: The height of the processed frames.
+ * - Parameter subframe: The subrectangle of AR preview which will be outputted. This means that the output frame in ``DeepARDelegate/frameAvailable:`` does not need to be the same size and/or position as the one rendered to the AR preview.
+ * - Parameter outputFormat: Pixel format of the captured images.
  */
 - (void)startCaptureWithOutputWidthAndFormat:(NSInteger)outputWidth outputHeight:(NSInteger)outputHeight subframe:(CGRect)subframe outputImageFormat:(OutputFormat)outputFormat;
 
 /**
- * @brief Stops outputting frames to @link DeepARDelegate::frameAvailable: frameAvailable @endlink.
+ * Stops capturing the AR preview frames in the image buffer.
+ *
+ * Images are no longer produced in the ``DeepARDelegate/frameAvailable:`` delegate method.
  */
 - (void)stopCapture;
 
 /**
- * @brief Fire named trigger of an fbx animation set on the currently loaded effect.
- * @details To learn more about fbx and image sequence animations on DeepAR please read our article <a href="https://help.deepar.ai/en/articles/4354740-animations-tutorial-fbx-model-animations">here</a>.
- * @param NSString* trigger The trigger name.
+ * Fire named trigger of an fbx animation set on the currently loaded effect.
+ *
+ * To learn more about fbx and image sequence animations on DeepAR please read our article [here](https://docs.deepar.ai/deep-ar-studio/tutorials/animation-controller#animation-state-transitions).
+ *
+ *- Parameter trigger: The trigger name.
  */
 - (void)fireTrigger:(NSString*)trigger;
 
 /**
- * @brief Informs DeepAR that a touch with was detected.
+ * Informs DeepAR that a touch occured.
  */
 - (void)touchOccurred:(TouchInfo)touchInfo;
 
 /**
- * @brief Display debugging stats on screen.
- * @param BOOL enabled Enable debugging stats.
+ * Display performance  stats on screen.
+ *
+ * - Parameter enabled: Enable performance stats.
  */
 - (void)showStats:(BOOL) enabled;
 
 /**
- * @brief Enable or disable global physics simulation.
- * @param BOOL enabled Enable global physics simulation.
+ * Enable or disable global physics simulation.
+ *
+ * - Parameter enabled: Enable global physics simulation.
  */
 - (void)simulatePhysics:(BOOL) enabled;
 
 /**
- * @brief Display physics colliders preview on screen.
- * @param BOOL enabled Enable physics colliders preview.
+ * Display physics colliders preview on screen.
+ *
+ * - Parameter enabled: Enable physics colliders preview.
  */
 - (void)showColliders:(BOOL) enabled;
 
 /**
- * @brief This method allows the user to change face detection sensitivity.
- * @param NSInteger sensitivity The <i>sensitivity</i> parameter can range from 0 to 3, where 0 is the fastest but might not recognize smaller (further away) faces, and 3 is the slowest but will find smaller faces. By default, this parameter is set to 1.
+ * Mutes or un-mutes all the sounds that are currently playing from the loaded effects.
+ *
+ * - Parameter muteSound: True if you want to mute all the sounds.
+ */
+- (void)muteSound:(BOOL) muteSound;
+
+#if TARGET_OS_IOS
+/**
+ * Enable background replacement (also known as background removal, or green screen effect).
+ *
+ * - Parameter enable: Indicates whether to enable or disable the background replacement effect.
+ * - Parameter image: Image to be used as the background.
+ */
+- (void)backgroundReplacement:(BOOL) enable image:(UIImage*) image;
+#elif TARGET_OS_OSX
+/**
+ * Enable background replacement (also known as background removal, or green screen effect).
+ *
+ * - Parameter enable: Indicates whether to enable or disable the background replacement effect.
+ * - Parameter image: Image to be used as the background.
+ */
+- (void)backgroundReplacement:(BOOL) enable image:(NSImage*) image;
+#endif
+
+/**
+ * Enables background blur.
+ *
+ * Video calling use case usually provides users with the option to blur the bacground.
+ *
+ * - Parameter enable: Indicates whether to enable or disable the background blur effect.
+ * - Parameter strength: Blur strength. Number ranging from 1-10.
+ */
+- (void)backgroundBlur:(BOOL) enable strength:(NSInteger) strength;
+
+/**
+ * This method allows the user to change face detection sensitivity.
+ *
+ * - Parameter sensitivity: Ranges from 0 to 3, where 0 is the fastest but might not recognize smaller (further away) faces, and 3 is the slowest but will find smaller faces. By default, this parameter is set to 1.
  */
 - (void)setFaceDetectionSensitivity:(NSInteger)sensitivity;
 
 /**
- * @brief Changes a node or component float parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param float value New parameter value.
+ * Changes a node or component float parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter value: New parameter value.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter floatValue:(float)value;
 
 /**
- * @brief Changes a node or component 4D vector parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param Vector4 value New parameter value.
+ * Changes a node or component 4D vector parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter value: New parameter value.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter vectorValue:(Vector4)value;
 
 /**
- * @brief Changes a node or component 3D vector parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param Vector3 value New parameter value.
+ * Changes a node or component 3D vector parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter value: New parameter value.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter vector3Value:(Vector3)value;
 
 /**
- * @brief Changes a node or component boolean parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param BOOL value New parameter value.
+ * Changes a node or component boolean parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter value: New parameter value.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter boolValue:(BOOL)value;
 
+#if TARGET_OS_IOS
 /**
- * @brief Changes a node or component image parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param UIImage* image New image parameter.
+ * Changes a node or component image parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter image: New image parameter.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter image:(UIImage*)image;
+#elif TARGET_OS_OSX
+/**
+ * Changes a node or component image parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter image: New image parameter.
+ */
+- (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter image:(NSImage*)image;
+#endif
 
 /**
- * @brief Changes a node or component string parameter.
- * @details For more details about changeParameter API read our article <a href="https://help.deepar.ai/en/articles/3732006-changing-filter-parameters-from-code">here</a>.
- * @param NSString* gameObject The name of the node. If multiple nodes share the same name, only the first one will be affected.
- * @param NSString* component The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
- * @param NSString* parameter The name of the parameter.
- * @param NSString* value New parameter value.
+ * Changes a node or component string parameter.
+ *
+ * For more details about changeParameter API read our article [here](https://docs.deepar.ai/guides-and-tutorials/changing-filter-parameters-from-code#changing-color).
+ *
+ * - Parameter gameObject: The name of the node. If multiple nodes share the same name, only the first one will be affected.
+ * - Parameter component: The name of the component. If the name of the component is null or an empty string, the node itself will be affected.
+ * - Parameter parameter: The name of the parameter.
+ * - Parameter value: New parameter value.
  */
 - (void)changeParameter:(NSString*)gameObject component:(NSString*)component parameter:(NSString*)parameter stringValue:(NSString*)value;
 
 
 /**
- * @brief Moves the selected game object from its current position in a tree and sets it as a direct child of a target game object.
- * @details This is equivalent to moving around a node in the node hierarchy in the DeepAR Studio.
- * @param NSString* selectedGameObjectName Node to move.
- * @param NSString* targetGameObjectName New node parent.
+ * Moves the selected game object from its current position in a tree and sets it as a direct child of a target game object.
+ *
+ * This is equivalent to moving around a node in the node hierarchy in the DeepAR Studio.
+ *
+ * - Parameter selectedGameObjectName: Node to move.
+ * - Parameter targetGameObjectName: New node parent.
  */
 - (void)moveGameObject:(NSString*)selectedGameObjectName targetGameObjectname:(NSString*)targetGameObjectName;
 
 /**
- * @brief Starts recording profiling stats by writing them to a CSV-formatted stream.
+ * Starts recording profiling stats by writing them to a CSV-formatted stream.
  */
 - (void)startProfiling;
 
 /**
- * @brief Stops recording profiling stats and sends the recorded CSV to the stat export server.
+ * Stops recording profiling stats and sends the recorded CSV to the stat export server.
  */
 - (void)stopProfiling;
 
+#if TARGET_OS_OSX
+- (BOOL)pushConsoleLog:(NSString*)message type:(LogType)type;
+
+- (NSMutableArray*)getConsoleLogs;
+#endif
+
 /**
- * @brief Set parameters that will determine how the face tracking is initialized.
- * @param params @link FaceTrackingInitParameters @endlink
+ * Set parameters that will determine how the face tracking is initialized.
+ *
+ * > Important: This function must be called before DeepAR engine initializes. Call it before calling ``createARViewWithFrame:`` or ``initializeOffscreenWithWidth:height:``.
+ *
+ * - Parameter params: The parameters. See ``FaceTrackingInitParameters``.
  */
 - (void)setFaceTrackingInitParameters:(FaceTrackingInitParameters)params;
 
-@end
+/**
+ * Check if variable with the given name is already created in the specified effect.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: True if variable is already created, false otherwise.
+ */
+- (bool)hasVar:(NSString*)name slot:(NSString*) slot;
 
-#import "ARView.h"
-#import "CameraController.h"
+/**
+ * Check if variable with the given name is already created in at least one effect.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: True if variable is already created, false otherwise.
+ */
+- (bool)hasVar:(NSString*)name;
+
+/**
+ * Get the type of the variable with the given name in the specified effect.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: Variable type. Supported types are: boolean, int, double and string.
+ * - Throws: `NSException` if the variable with the specified name does not exist.
+ */
+- (VarType)getVarType:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Get the type of the variable with the given name.
+ *
+ * The variable is searched in all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: Variable type. Supported types are: boolean, int, double and string.
+ * - Throws: `NSException` if the variable with the specified name does not exist.
+ */
+- (VarType)getVarType:(NSString*)name;
+
+/**
+ * Get boolean variable with the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: Boolean value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the bool type.
+ */
+- (bool)getBoolVar:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Get boolean variable with the given name.
+ *
+ * The variable is searched in all effects
+ *
+ * - Parameter name: The variable name.
+ * - Returns: Boolean value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the bool type.
+ */
+- (bool)getBoolVar:(NSString*)name;
+
+/**
+ * Get integer variable with the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: Int value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the int type.
+ */
+- (int)getIntVar:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Get integer variable with the given name.
+ *
+ * The variable is searched in all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: Int value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the int type.
+ */
+- (int)getIntVar:(NSString*)name;
+
+/**
+ * Get double variable with the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: Double value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the double type.
+ */
+- (double)getDoubleVar:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Get double variable with the given name.
+ *
+ * The variable is searched in all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: Double value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the double type.
+ */
+- (double)getDoubleVar:(NSString*)name;
+
+/**
+ * Get string variable with the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: String value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the string type.
+ */
+- (NSString*)getStringVar:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Get string variable with the given name.
+ *
+ * The variable is searched in all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: String value of the variable with the specified name.
+ * - Throws: `NSException` if the variable with the specified name does not exist or is not of the string type.
+ */
+- (NSString*)getStringVar:(NSString*)name;
+
+/**
+ * Set the boolean variable wih the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setBoolVar:(NSString*)name value:(bool)value slot:(NSString*) slot;
+
+/**
+ * Set the boolean variable with the given name.
+ *
+ * The variable is set globally, for all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setBoolVar:(NSString*)name value:(bool)value;
+
+/**
+ * Set the int variable wih the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setIntVar:(NSString*)name value:(int)value slot:(NSString*) slot;
+
+/**
+ * Set the int variable with the given name.
+ *
+ * The variable is set globally, for all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setIntVar:(NSString*)name value:(int)value;
+
+/**
+ * Set the double variable wih the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setDoubleVar:(NSString*)name value:(double)value slot:(NSString*) slot;
+
+/**
+ * Set the double variable with the given name.
+ *
+ * The variable is set globally, for all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setDoubleVar:(NSString*)name value:(double)value;
+
+/**
+ * Set the string variable wih the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setStringVar:(NSString*)name value:(NSString*)value slot:(NSString*) slot;
+
+/**
+ * Set the string variable with the given name.
+ *
+ * The variable is set globally, for all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter value: Value to be set.
+ * - Returns: True if the variable is created. False if the variable with the given name already exists and the new value is set.
+ */
+- (bool)setStringVar:(NSString*)name value:(NSString*)value;
+
+/**
+ * Delete the variable with the given name.
+ *
+ * - Parameter name: The variable name.
+ * - Parameter slot: The slot of the effect in which to search the variable.
+ * - Returns: True if variable is deleted, false otherwise.
+ */
+- (bool)deleteVar:(NSString*)name slot:(NSString*) slot;
+
+/**
+ * Delete the variable with the given name.
+ *
+ * The variable is searched in all effects.
+ *
+ * - Parameter name: The variable name.
+ * - Returns: True if variable is deleted, false otherwise.
+ */
+- (bool)deleteVar:(NSString*)name;
+
+/**
+ * Clear all variables or variables from the specified effect.
+ *
+ * - Parameter slot: The ID of the effect in which to search the variable.
+ * - Returns: True if one or more variables are deleted, false otherwise.
+ */
+- (bool)clearVars:(NSString*)slot;
+
+/**
+ * Clear all variables.
+ *
+ * - Returns: True if one or more variables are deleted, false otherwise.
+ */
+- (bool)clearVars;
+
+@end
