@@ -138,15 +138,22 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
 
         case "background_replacement":
             let image_path:String = args?["image"] as! String
-            let key = registrar?.lookupKey(forAsset: image_path)
-            let path = Bundle.main.path(forResource: key, ofType: nil)
-            let image = UIImage(contentsOfFile: path ?? "")
-            if ((path) != nil) {
-                deepAR.backgroundReplacement(true, image: image)
+            let path : String = "file://" + image_path.addingPercentEncoding(withAllowedCharacters:NSCharacterSet.urlQueryAllowed)!
+            if let filePath: URL = URL.init(string: path) {
+                do {
+                    let data = try Data(contentsOf: filePath)
+                    guard let image = UIImage(data: data) else {
+                        result("backgroundReplacement called failed")
+                        return
+                    }
+                    deepAR.backgroundReplacement(true, image: image)
+                    result("backgroundReplacement called successfully")
+                } catch {
+                    result("backgroundReplacement called failed")
+                }
             } else {
-                deepAR.backgroundReplacement(false, image: image)
+                result("backgroundReplacement called failed")
             }
-            result("backgroundReplacement called successfully")
 
         case "background_blur":
             let enable:Bool = args?["enable"] as! Bool
