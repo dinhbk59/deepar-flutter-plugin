@@ -178,6 +178,16 @@ class DeepArPlatformHandler {
     return completer.future.then((value) => value);
   }
 
+  Future<void> pauseRecordingVideoIos(int view) async {
+    await _avCameraChannel(view)
+        .invokeMethod<String>(PlatformStrings.pauseRecordingVideo);
+  }
+
+  Future<void> resumeRecordingVideoIos(int view) async {
+    await _avCameraChannel(view)
+        .invokeMethod<String>(PlatformStrings.resumeRecordingVideo);
+  }
+
   Future<String?> getResolutionDimensions(int view) async {
     final dimensions = await _avCameraChannel(view)
         .invokeMethod<String?>(PlatformStrings.getResolution);
@@ -274,7 +284,8 @@ class DeepArPlatformHandler {
   }
 
   Future<String?> backgroundReplacementAndroid(String? image) {
-    return _channel.invokeMethod<String>(PlatformStrings.backgroundReplacement, {
+    return _channel
+        .invokeMethod<String>(PlatformStrings.backgroundReplacement, {
       PlatformStrings.image: image,
     });
   }

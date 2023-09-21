@@ -167,6 +167,22 @@ class DeepArController {
     return File(_file!);
   }
 
+  ///pause recording video
+  Future<void> pauseVideoRecording() async {
+    if (Platform.isAndroid) {
+    } else {
+      _deepArPlatformHandler.pauseRecordingVideoIos(_textureId!);
+    }
+  }
+
+  ///resume recording video
+  Future<void> resumeVideoRecording() async {
+    if (Platform.isAndroid) {
+    } else {
+      _deepArPlatformHandler.resumeRecordingVideoIos(_textureId!);
+    }
+  }
+
   ///Takes picture of the current frame and returns a [File]
   Future<File> takeScreenshot() async {
     final _file = await platformRun(
@@ -301,8 +317,8 @@ class DeepArController {
     return platformRun(
         androidFunction: () =>
             _deepArPlatformHandler.backgroundReplacementAndroid(image),
-        iOSFunction: () =>
-            _deepArPlatformHandler.backgroundReplacementIos(image, _textureId!));
+        iOSFunction: () => _deepArPlatformHandler.backgroundReplacementIos(
+            image, _textureId!));
   }
 
   ///backgroundBlur
@@ -310,8 +326,8 @@ class DeepArController {
     return platformRun(
         androidFunction: () =>
             _deepArPlatformHandler.backgroundBlurAndroid(enable, strength),
-        iOSFunction: () =>
-            _deepArPlatformHandler.backgroundBlurIos(enable, strength, _textureId!));
+        iOSFunction: () => _deepArPlatformHandler.backgroundBlurIos(
+            enable, strength, _textureId!));
   }
 
   ///Fire named trigger of an fbx animation set on the currently loaded effect.

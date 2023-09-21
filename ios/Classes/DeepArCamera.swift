@@ -167,6 +167,12 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
         case "stop_recording_video":
             finishRecordingVideo();
             result("STOPPING_RECORDING");
+        case "pause_recording_video":
+            pauseRecordingVideo();
+            result("PAUSE_RECORDING");
+        case "resume_recording_video":
+            resumeRecordingVideo();
+            result("RESUME_RECORDING");
         case "get_resolution":
             result(String(1280) + " " + String(720));
         case "take_screenshot":
@@ -313,6 +319,14 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
     
     func finishRecordingVideo(){
         deepAR.finishVideoRecording();
+    }
+    
+    func pauseRecordingVideo() {
+        deepAR.pauseVideoRecording()
+    }
+    
+    func resumeRecordingVideo() {
+        deepAR.resumeVideoRecording()
     }
     
     func didFinishPreparingForVideoRecording() {
