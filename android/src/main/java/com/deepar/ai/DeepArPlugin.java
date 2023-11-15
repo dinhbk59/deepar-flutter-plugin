@@ -133,7 +133,7 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 String image = ((String) arguments.get("image"));
                 try {
                     if (image.isEmpty()) {
-
+                        Log.e("DeepAR", "Error : Unable to create image");
                         deepAR.backgroundReplacement(false, null);
                     } else {
                         Bitmap backgroundImage = filePathToBitmap(image);

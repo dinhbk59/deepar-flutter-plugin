@@ -137,8 +137,9 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
             result("switchEffectWithSlot called successfully")
 
         case "background_replacement":
-            let image_path:String = args?["image"] as! String
-            let path : String = "file://" + image_path.addingPercentEncoding(withAllowedCharacters:NSCharacterSet.urlQueryAllowed)!
+            let imagePath: String? = args?["image"] as? String
+            if let image_path = imagePath {
+                let path : String = "file://" + image_path.addingPercentEncoding(withAllowedCharacters:NSCharacterSet.urlQueryAllowed)!
             if let filePath: URL = URL.init(string: path) {
                 do {
                     let data = try Data(contentsOf: filePath)
@@ -152,8 +153,14 @@ class DeepARCameraView: NSObject, FlutterPlatformView, DeepARDelegate {
                     result("backgroundReplacement called failed")
                 }
             } else {
+                deepAR.backgroundReplacement(false, image: UIImage(named: ""))
                 result("backgroundReplacement called failed")
             }
+            } else {
+                deepAR.backgroundReplacement(false, image: UIImage(named: ""))
+                result("backgroundReplacement called failed")
+            }
+            
 
         case "background_blur":
             let enable:Bool = args?["enable"] as! Bool
