@@ -131,7 +131,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
             case MethodStrings.backgroundReplacement: // Background Replacement
                 String image = ((String) arguments.get("image"));
-                try {
+                if (image != null) {
+                    try {
                     if (image.isEmpty()) {
                         Log.e("DeepAR", "Error : Unable to create image");
                         deepAR.backgroundReplacement(false, null);
@@ -145,6 +146,10 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                     e.printStackTrace();
                     result.error("111", "backgroundReplacement failed", e.getMessage());
                 }
+                } else {
+                    deepAR.backgroundReplacement(false, null);
+                }
+                
                 break;
 
             case MethodStrings.backgroundBlur: // background Blur
