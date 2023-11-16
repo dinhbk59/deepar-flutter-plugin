@@ -402,8 +402,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-        channel.setMethodCallHandler(null);
-        cameraXChannel.setMethodCallHandler(null);
+        // channel.setMethodCallHandler(null);
+        // cameraXChannel.setMethodCallHandler(null);
     }
 
     @Override
