@@ -149,7 +149,8 @@ public class DeepArPlugin implements FlutterPlugin, AREventListener, ActivityAwa
                 }
                 } else {
                     Log.e("DeepAR", "Error : background with null image");
-                    deepAR.backgroundReplacement(false, null);
+                    Bitmap background = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    deepAR.backgroundReplacement(false, background);
                     result.success("backgroundReplacement called successfully with no background");
                 }
                 
